@@ -70,14 +70,9 @@ public:
 	}
 
 	bool add(T value) {
-		//T y = NULL;
-
 		acquire(value);
 		int i = -1, h = -1;
 		bool mustResize = false;
-
-		//printf("capacity: %d\n", capacity);
-
 
 		if (contains(value)) {
 			return false;
@@ -86,51 +81,26 @@ public:
 		vector<T> set0 = table[0][hash0(value)];
 		vector<T> set1 = table[1][hash1(value)];
 
-		//printf("hash 0: %d\n", hash0(value));
-		//printf("hash 1: %d\n", hash1(value));
-
 
 		int set0Size = probeSetSize(set0);
 		int set1Size = probeSetSize(set1);
-		//printf("set 0 size: %d\n", set0Size);
-		//printf("set 1 size: %d\n", set1Size);
 		if (set0Size < THRESHOLD) {
-			//printf("added to set 0\n");
 			table[0][hash0(value)][set0Size] = value;
-		//printf("probe set 1 size: %d\n", probeSetSize(set0));
-		//printf("probe set 2 size: %d\n", probeSetSize(set1));
-			// for (auto it = set0.begin(); it != set0.end(); ++it) {
-			// 	printf("%d\n", *it);
-			// }
-			//printf("%d\n", table[0][hash0(value)][set0Size]);
-			//wprintf("got here 2\n");
-			//release(value);
 			return true;
 		}
 		else if (set1Size < THRESHOLD) {
-			//printf("added to set 1\n");
 			table[1][hash1(value)][set1Size] = value;
-			//printf("%d\n", set1[set1Size]);
-			//printf("got here 3\n");
-			//release(value);
 			return true;
 		}
 		else if (set0Size < PROBE_SIZE) {
-			//printf("added to set 0\n");
-			//set0[set0Size] = value;
 			table[0][hash0(value)][set0Size] = value;
 			i = 0;
 			h = hash0(value);
-			//printf("%d\n", set0[set0Size]);
-			//printf("got here 4\n");
 		}
 		else if (set1Size < PROBE_SIZE) {
-			//printf("added to set 1\n");
 			table[1][hash1(value)][set1Size] = value;
 			i = 1;
 			h = hash1(value);
-			//printf("%d\n", set1[set1Size]);
-			//printf("got here 5\n");
 		}
 		else {
 			mustResize = true;
@@ -160,7 +130,6 @@ public:
 			} else {
 				hj = hash0(y);
 			}
-			//acquire(y);
 			vector<T> jSet = table[j][hj];
 
 			bool eraseResult = false;
@@ -169,7 +138,6 @@ public:
 				index++;
 				if (*it == y) {
 					table[i][hi][index] = 0;
-					//iSet.erase(it);
 					eraseResult = true;
 					break;
 				}
@@ -178,41 +146,31 @@ public:
 			int iSetSize = probeSetSize(iSet);
 			if (eraseResult) {
 				if (jSetSize < THRESHOLD) {
-					//jSet[jSetSize] = y;
 					table[j][hj][jSetSize] = y;
-					//release(y);
 					return true;
 				}
 				else if (jSetSize < PROBE_SIZE) {
-					//jSet[jSetSize] = y;
 					table[j][hj][jSetSize] = y;
 					i = 1 - i;
 					hi = hj;
 					j = 1 - j;
-					//release(y);
 				}
 				else {
-					//iSet[iSetSize] = y;
 					table[i][hi][iSetSize] = y;
-					//release(y);
 					return false;
 				}
 			}
 			else if (iSetSize >= THRESHOLD) {
-				//release(y);
 				continue;
 			}
 			else {
-				//release(y);
 				return true;
 			}
-			//release(y);
 		}
 		return false;
 	}
 
 	bool contains(T value) {
-		//printf("got into contains\n");
 		acquire(value);
 
 		vector<T> set0 = table[0][hash0(value)];
@@ -227,32 +185,19 @@ public:
 
 		for (auto it = set1.begin(); it != set1.end(); ++it) {
 			if (*it == value) {
-				//release(value);
 				return true;
 			}
 		}
-		//printf("nah i dont got it\n");
-		//release(value);
 		return false;
 
 	}
 
 	void resize() {
-		//printf("got into resize");
 		int oldCapacity = capacity;
-		// for (auto it = locks[0].begin(); it != locks[0].end(); ++it) {
-		// 	*it.lock();
-		// }
+
 		for (int i = 0; i < LOCKS_SIZE; i++) {
-			// std::recursive_mutex &currMutex = locks[0][i];
-			// currMutex.lock();
 			std::unique_lock<std::recursive_mutex> lock1(locks[0][i]);
-			//std::unique_lock<std::recursive_mutex> lock2(locks[1][i]);
 		}
-		// for (int i = 0; i < LIMIT; i++) {
-		// 	recursive_mutex &currMutex = locks[1][i];
-		// 	currMutex.lock();
-		// }
 
 		if (capacity != oldCapacity) {
 			return;
@@ -302,7 +247,6 @@ public:
 			index++;
 			if (*it == value) {
 				table[0][valHash0][index] = 0;
-				//release(value);
 				return true;
 			}
 		}
@@ -313,11 +257,9 @@ public:
 			index++;
 			if (*iter == value) {
 				table[1][valHash1][index] = 0;
-				//release(value);
 				return true;
 			}
 		}
-		//release(value);
 
 		return false;
 	}
@@ -330,7 +272,6 @@ public:
 				for (auto it = table[i][j].begin(); it != table[i][j].end(); ++it) {
 					if (*it != 0) {
 						numElems++;
-						//printf("%d ", *it);
 					}					
 				}
 			}
@@ -341,29 +282,15 @@ public:
 	}
 
 	void acquire(T value) {
-		// std::recursive_mutex &firstMutex = locks[0][hash0(value)];
-		// firstMutex.lock();
-		// std::recursive_mutex &secondMutex = locks[1][hash1(value)];
-		// secondMutex.lock();
 		std::unique_lock<std::recursive_mutex> lock1(locks[0][hash0(value) % LOCKS_SIZE]);
 		std::unique_lock<std::recursive_mutex> lock2(locks[1][hash1(value) % LOCKS_SIZE]);
 	}
-
-	// void release(T value) {
-	// 	std::recursive_mutex &firstMutex = locks[0][hash0(value)];
-	// 	firstMutex.unlock();
-	// 	std::recursive_mutex &secondMutex = locks[1][hash1(value)];
-	// 	secondMutex.unlock();
-	// }
  
  	int populate(vector<T> values) {
-		//printf("started populate\n");
  		int amount = 0;
  		for (auto it = values.begin(); it != values.end(); ++it) {
- 			//printf("about to add\n");
  			if (add(*it) == true) {
  				amount++;
- 				//printf("finished add\n");
  			}
  		}
  		return amount;
